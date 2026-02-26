@@ -1,0 +1,25 @@
+Source: multiflexi-eventor
+Section: web
+Priority: optional
+Maintainer: Vítězslav Dvořák <info@vitexsoftware.cz>
+Build-Depends:
+ debhelper-compat (= 13),
+ jq,
+ moreutils
+Standards-Version: 4.7.0
+Homepage: https://multiflexi.eu/
+Rules-Requires-Root: no
+Vcs-Git: https://github.com/VitexSoftware/multiflexi-event-processor.git
+Vcs-Browser: https://github.com/VitexSoftware/multiflexi-event-processor
+
+Package: multiflexi-eventor
+Architecture: all
+Multi-Arch: foreign
+Depends:
+ ${misc:Depends},
+ multiflexi-sqlite (>= 2.4.1) | multiflexi-mysql (>= 2.4.1) | multiflexi-pgsql (>= 2.4.1), php-vitexsoftware-multiflexi-core, multiflexi-cli (>= 2.2.0)
+Suggests: multiflexi-executor, multiflexi-scheduler
+Description: Event-driven job triggering for MultiFlexi
+ Polls webhook adapter databases for cached change events,
+ matches them against configurable rules, and schedules
+ MultiFlexi jobs accordingly.

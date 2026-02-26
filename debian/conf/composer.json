@@ -1,0 +1,37 @@
+{
+  "name": "vitexsoftware/multiflexi-eventor",
+  "description": "Event-driven job triggering for MultiFlexi",
+  "type": "project",
+  "require": {
+    "deb/multiflexi-core": "*"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Vítězslav Dvořák",
+      "email": "info@vitexsoftware.cz"
+    }
+  ],
+  "config": {
+    "vendor-dir": "/var/lib/composer/multiflexi-eventor"
+  },
+  "minimum-stability": "dev",
+  "autoload": {
+    "psr-4": {
+    }
+  },
+  "repositories": [
+    {
+      "type": "path",
+      "url": "/usr/share/php/EaseCore/"
+    },
+    {
+      "type": "path",
+      "url": "/usr/share/php/MultiFlexi/"
+    },
+    {
+      "type": "path",
+      "url": "/usr/share/php/EaseFluentPDO/"
+    }
+  ]
+}

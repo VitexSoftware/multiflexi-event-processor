@@ -1,0 +1,46 @@
+{
+    "name": "vitexsoftware/multiflexi-event-processor",
+    "description": "Event-driven job triggering for MultiFlexi",
+    "type": "project",
+    "keywords": [
+        "event",
+        "webhook",
+        "processor",
+        "php"
+    ],
+    "require": {
+        "vitexsoftware/multiflexi-core": "dev-main"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Vítězslav Dvořák",
+            "email": "info@vitexsoftware.cz"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "MultiFlexi\\": "src/MultiFlexi/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Test\\MultiFlexi\\": "tests/MultiFlexi/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "*",
+        "phpstan/phpstan": "*",
+        "friendsofphp/php-cs-fixer": "^3.92",
+        "ergebnis/composer-normalize": "^2.48",
+        "ergebnis/php-cs-fixer-config": "^6.58",
+        "phpstan/phpstan-phpunit": "2.0.x-dev",
+        "rector/rector": "dev-main"
+    },
+    "config": {
+        "allow-plugins": {
+            "ergebnis/composer-normalize": true
+        }
+    }
+}

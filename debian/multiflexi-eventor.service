@@ -1,0 +1,22 @@
+#!/bin/sh
+# If this exists, it is installed into lib/systemd/system/multiflexi-eventor.service
+# See dh_systemd_enable(1).
+
+[Unit]
+Description=MultiFlexi Event Processor - event-driven job triggering
+After=multi-user.target
+
+[Service]
+User=multiflexi
+Group=multiflexi
+EnvironmentFile=/etc/multiflexi/multiflexi.env
+ExecStart=/usr/bin/php /usr/lib/multiflexi-eventor/daemon.php
+LimitNOFILE=8192:16384
+Type=simple
+MemoryMax=1G
+Environment=MULTIFLEXI_MEMORY_LIMIT_MB=900
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+#!/bin/sh
+# If no user provided script is activated in this file, you should remove this file.
+set -e
+
+composer-debian multiflexi-eventor
+update-multiflexi-env
+
+case "$1" in
+  trigger)
+    if [ "$2" = "restart-multiflexi" ]; then
+      systemctl try-restart multiflexi-eventor.service || true
+    fi
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0

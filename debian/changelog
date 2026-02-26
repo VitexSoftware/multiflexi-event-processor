@@ -1,0 +1,15 @@
+multiflexi-eventor (0.2.0) UNRELEASED; urgency=medium
+
+  * Move EventSource/EventRule domain classes to multiflexi-core
+  * EventProcessor engine with poll/match/schedule loop
+
+ -- vitex <info@vitexsoftware.cz>  Wed, 26 Feb 2026 20:30:00 +0100
+
+multiflexi-eventor (0.1.0) unstable; urgency=low
+
+  * Initial release of MultiFlexi Event Processor.
+  * Poll webhook adapter databases for cached change events.
+  * Match events against configurable rules.
+  * Schedule MultiFlexi jobs via multiflexi-cli.
+
+ -- Vítězslav Dvořák <info@vitexsoftware.cz>  Wed, 26 Feb 2026 20:00:00 +0100
