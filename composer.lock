@@ -803,12 +803,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/VitexSoftware/php-vitexsoftware-multiflexi-core.git",
-                "reference": "22548f18663f8582fcfc1ba2db30448e9b28d018"
+                "reference": "9c84b27f91dc9c29362947314e311c7b51f5b27e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/VitexSoftware/php-vitexsoftware-multiflexi-core/zipball/22548f18663f8582fcfc1ba2db30448e9b28d018",
-                "reference": "22548f18663f8582fcfc1ba2db30448e9b28d018",
+                "url": "https://api.github.com/repos/VitexSoftware/php-vitexsoftware-multiflexi-core/zipball/9c84b27f91dc9c29362947314e311c7b51f5b27e",
+                "reference": "9c84b27f91dc9c29362947314e311c7b51f5b27e",
                 "shasum": ""
             },
             "require": {
@@ -853,7 +853,7 @@
                 "issues": "https://github.com/VitexSoftware/php-vitexsoftware-multiflexi-core/issues",
                 "source": "https://github.com/VitexSoftware/php-vitexsoftware-multiflexi-core/tree/main"
             },
-            "time": "2026-02-25T00:41:02+00:00"
+            "time": "2026-02-26T20:02:49+00:00"
         }
     ],
     "packages-dev": [
@@ -2313,8 +2313,8 @@
             "version": "2.2.x-dev",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/d7b343c2bc70c97eb7d06e31463c9d25e3877aff",
-                "reference": "d7b343c2bc70c97eb7d06e31463c9d25e3877aff",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/cd881cf96c2370aa82f342d6bfb1a708f81752e8",
+                "reference": "cd881cf96c2370aa82f342d6bfb1a708f81752e8",
                 "shasum": ""
             },
             "require": {
@@ -2360,7 +2360,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-02-26T19:00:20+00:00"
+            "time": "2026-03-01T20:05:07+00:00"
         },
         {
             "name": "phpstan/phpstan-phpunit",
@@ -3587,12 +3587,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/rectorphp/rector.git",
-                "reference": "868d2da0ded4f0816cf73b69a57a39eb270993a8"
+                "reference": "d55387cd4bca521924eea2e089ea4bfb7c493c13"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rectorphp/rector/zipball/868d2da0ded4f0816cf73b69a57a39eb270993a8",
-                "reference": "868d2da0ded4f0816cf73b69a57a39eb270993a8",
+                "url": "https://api.github.com/repos/rectorphp/rector/zipball/d55387cd4bca521924eea2e089ea4bfb7c493c13",
+                "reference": "d55387cd4bca521924eea2e089ea4bfb7c493c13",
                 "shasum": ""
             },
             "require": {
@@ -3640,7 +3640,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-02-26T17:05:59+00:00"
+            "time": "2026-03-01T14:58:56+00:00"
         },
         {
             "name": "sebastian/cli-parser",
