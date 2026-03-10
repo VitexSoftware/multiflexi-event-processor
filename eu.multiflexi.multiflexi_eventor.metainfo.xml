@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="service">
+  <id>eu.multiflexi.multiflexi_eventor</id>
+
+  <name>MultiFlexi Event Processor</name>
+  <summary>Event-driven job triggering for MultiFlexi</summary>
+
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+
+  <developer id="cz.vitexsoftware">
+    <name>Vitex Software</name>
+  </developer>
+
+  <description>
+    <p>
+      MultiFlexi Event Processor polls webhook adapter databases for cached
+      change events, matches them against configurable rules, and schedules
+      MultiFlexi jobs accordingly.
+    </p>
+    <p>
+      It provides event-driven job triggering as a complement to the
+      time-based scheduling offered by MultiFlexi Scheduler, enabling
+      reactive workflows in the MultiFlexi platform.
+    </p>
+  </description>
+
+  <launchable type="service">multiflexi-eventor.service</launchable>
+
+  <url type="homepage">https://multiflexi.eu</url>
+  <url type="bugtracker">https://github.com/VitexSoftware/multiflexi-event-processor/issues</url>
+  <url type="vcs-browser">https://github.com/VitexSoftware/multiflexi-event-processor</url>
+
+  <content_rating type="oars-1.1" />
+
+  <provides>
+    <binary>multiflexi-eventor</binary>
+  </provides>
+
+  <categories>
+    <category>System</category>
+  </categories>
+</component>
