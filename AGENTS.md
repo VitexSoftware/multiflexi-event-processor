@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to WARP (warp.dev) when working with code in this repository.
+This file provides guidance to AI coding agents (Claude Code, WARP, etc.) when working with code in this repository.
 
 ## Project Overview
 
@@ -60,19 +60,59 @@ The `changes_cache` table (primary key: `inversion`) stores webhook data from ad
 - `source` (int) — foreign key to `changesapi` table (identifies the AbraFlexi server)
 - `target` (string, 30) — target system identifier
 
+## Architecture
+
+All source classes live under `src/MultiFlexi/` with PSR-4 namespace `MultiFlexi\`. The daemon entry point is `src/daemon.php`.
+
+### Core Classes
+
+| Class | Table | Role |
+|---|---|---|
+| `EventProcessor` | `event_source` | Main engine: calls `pollAndProcess()` which iterates enabled sources, loads matching rules, calls `scheduleJob()` |
+| `EventSource` | `event_source` | Represents a webhook adapter database connection; provides `getUnprocessedChanges()`, `wipeCacheRecord()`, `updateLastProcessed()`, `isReachable()` |
+| `EventRule` | `event_rule` | Represents a matching rule; `matches(array $change)` checks `evidence`+`operation` (null evidence or `OPERATION_ANY` act as wildcards); `buildEnvOverrides()` maps change fields to env vars injected into the job |
+
+All three extend `DBEngine` from `vitexsoftware/multiflexi-core` (FluentPDO-backed Ease framework).
+
+### Job Scheduling
+
+When a rule matches, `EventProcessor::scheduleJob()` calls:
+```
+multiflexi-cli runtemplate schedule --id <RT_ID> --config KEY=VAL --schedule_time now --executor Native --schedule_type event -f json
+```
+The `schedule_type event` constant is `EventProcessor::SCHEDULE_TYPE`.
+
+`buildEnvOverrides()` always injects standard metadata (`EVENT_INVERSION`, `EVENT_EVIDENCE`, `EVENT_OPERATION`, `EVENT_RECORD_ID`) plus any custom mappings from `event_rule.env_mapping` (JSON: `{"ENV_VAR": "change_field"}`).
+
+### Daemon Loop (`src/daemon.php`)
+
+1. Reads config from `.env` (or `/etc/multiflexi/multiflexi.env` in production) via `Ease\Shared::init()`
+2. Waits for DB connectivity with up to 10 retries (30 s apart); exits on permanent errors (auth failure, unknown DB)
+3. Polls in a `do/while` loop sleeping `MULTIFLEXI_CYCLE_PAUSE` seconds (default 10) between iterations
+4. Logs to syslog + `LogToSQL`; optionally Zabbix and console (when `APP_DEBUG=true`)
+
 ## Build & Development Commands
 
 Dependencies are managed via Composer. The standard Makefile targets (consistent across the suite) are:
 
-- `make vendor` — install Composer dependencies (`composer install`)
-- `make tests` — run PHPUnit test suite (`vendor/bin/phpunit tests`)
-- `make static-code-analysis` — run PHPStan (`vendor/bin/phpstan analyse --configuration=phpstan-default.neon.dist`)
-- `make static-code-analysis-baseline` — regenerate PHPStan baseline
-- `make cs` — fix coding standards via php-cs-fixer (`vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --verbose`)
-- `make autoload` — update Composer autoload (`composer update`)
+```sh
+make vendor                      # composer install
+make tests                       # vendor/bin/phpunit tests
+make cs                          # php-cs-fixer (PSR-12)
+make static-code-analysis        # phpstan level 5
+make static-code-analysis-baseline  # regenerate PHPStan baseline
+make autoload                    # composer update
 
-Run a single test file: `vendor/bin/phpunit path/to/TestFile.php`
-Run tests by pattern: `vendor/bin/phpunit --filter "TestNameOrRegex"`
+# Run a single test file or filter
+vendor/bin/phpunit tests/MultiFlexi/EventProcessorTest.php
+vendor/bin/phpunit --filter "testMatchesAnyOperation"
+
+# Lint a PHP file before committing
+php -l src/MultiFlexi/EventProcessor.php
+
+# Build Debian package
+dpkg-buildpackage -b -uc
+```
 
 After every PHP file edit, run `php -l <file>` to lint before proceeding.
 
@@ -86,9 +126,16 @@ After every PHP file edit, run `php -l <file>` to lint before proceeding.
 
 ## Configuration & Environment
 
-- Place a `.env` file at the repository root; the app reads settings via `Ease\Shared`
-- Standard env keys: `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, `APP_DEBUG`, `EASE_LOGGER`
-- Optional monitoring keys: `ZABBIX_SERVER`, `ZABBIX_HOST`, `OTEL_ENABLED`, `OTEL_EXPORTER_OTLP_ENDPOINT`
+Copy `.env.example` to `.env` at the repository root. Required keys: `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
+
+Standard env keys: `APP_DEBUG`, `EASE_LOGGER`
+
+Daemon-specific keys:
+- `MULTIFLEXI_DAEMONIZE` — `true` to loop, `false` for single-pass (useful for testing)
+- `MULTIFLEXI_CYCLE_PAUSE` — seconds between poll cycles (default `10`)
+- `MULTIFLEXI_CLI_PATH` — path to `multiflexi-cli` binary (default: `multiflexi-cli`)
+
+Optional observability: `ZABBIX_SERVER`, `ZABBIX_HOST`, `OTEL_ENABLED`, `OTEL_EXPORTER_OTLP_ENDPOINT`
 
 ## Related Projects & Extensions
 
