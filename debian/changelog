@@ -1,4 +1,4 @@
-multiflexi-eventor (0.2.1) UNRELEASED; urgency=medium
+multiflexi-eventor (0.2.2) UNRELEASED; urgency=medium
 
   [ vitex ]
   * Move EventSource/EventRule domain classes to multiflexi-core
@@ -9,8 +9,12 @@ multiflexi-eventor (0.2.1) UNRELEASED; urgency=medium
     debian/conf/composer.json, using vitexsoftware/* package names so
     composer-debian resolves multiflexi-core and the eventor vendor
     autoloader is populated again.
+  * Ship a static autoloader (system package autoloaders + PSR-4 +
+    InstalledVersions) and point daemon.php at it, instead of a
+    composer-debian /var/lib/composer vendor dir that was never
+    populated (daemon failed to start with missing autoload.php).
 
- -- Vítězslav Dvořák <info@vitexsoftware.cz>  Mon, 08 Jun 2026 14:58:27 +0200
+ -- Vítězslav Dvořák <info@vitexsoftware.cz>  Mon, 08 Jun 2026 16:16:03 +0200
 
 multiflexi-eventor (0.1.0) unstable; urgency=low
 
