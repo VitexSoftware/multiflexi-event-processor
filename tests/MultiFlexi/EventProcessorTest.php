@@ -16,7 +16,6 @@ declare(strict_types=1);
 namespace Test\MultiFlexi;
 
 use MultiFlexi\EventProcessor;
-use MultiFlexi\EventRule;
 use MultiFlexi\EventSource;
 use PHPUnit\Framework\TestCase;
 

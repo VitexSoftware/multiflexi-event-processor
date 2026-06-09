@@ -105,7 +105,13 @@ function waitForDatabase(): void
 
 waitForDatabase();
 $processor = new EventProcessor();
+$nodeRed = new \MultiFlexi\NodeRedBridge();
+$jobWatcher = new \MultiFlexi\JobWatcher($nodeRed);
 $processor->logBanner(sprintf(_('MultiFlexi Eventor Daemon %s started'), Shared::appVersion()));
+
+if ($nodeRed->isEnabled()) {
+    $processor->addStatusMessage(_('Node-RED bridge enabled: forwarding events to the configured endpoint'), 'info');
+}
 
 do {
     try {
@@ -113,6 +119,13 @@ do {
 
         if ($processedCount > 0) {
             $processor->addStatusMessage(sprintf(_('Processed %d event(s)'), $processedCount), 'success');
+        }
+
+        // Forward newly finished jobs to Node-RED (output chaining)
+        $forwardedJobs = $jobWatcher->forwardFinishedJobs();
+
+        if ($forwardedJobs > 0) {
+            $processor->addStatusMessage(sprintf(_('Forwarded %d finished job(s) to Node-RED'), $forwardedJobs), 'success');
         }
     } catch (\PDOException $e) {
         error_log('Database error: '.$e->getMessage());
@@ -123,6 +136,8 @@ do {
 
         waitForDatabase();
         $processor = new EventProcessor();
+        $nodeRed = new \MultiFlexi\NodeRedBridge();
+        $jobWatcher = new \MultiFlexi\JobWatcher($nodeRed);
     } catch (\Throwable $e) {
         error_log('Error in event processor: '.$e->getMessage());
         $processor->addStatusMessage('Error: '.$e->getMessage(), 'error');

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="addon">
+  <id>io.github.vitexus.node_red_contrib_multiflexi</id>
+  <extends>io.github.vitexus.node_red</extends>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Node-RED Contrib MultiFlexi</name>
+  <summary>Node-RED nodes for visual MultiFlexi process orchestration</summary>
+  <description>
+    <p>
+      Manage relationships between MultiFlexi processes visually in Node-RED.
+      The multiflexi-eventor daemon forwards webhook changes and finished jobs
+      to these nodes, and flows schedule RunTemplates in response, turning the
+      arrows you draw into orchestration logic.
+    </p>
+    <p>Provided nodes:</p>
+    <ul>
+      <li>multiflexi-config — MultiFlexi REST API connection</li>
+      <li>multiflexi-event — receives forwarded events over HTTP</li>
+      <li>multiflexi-runtemplate — schedules a RunTemplate via the REST API</li>
+      <li>multiflexi-artifact — splits a finished-job event into per-artifact messages</li>
+    </ul>
+    <p>
+      Supports optional X-MultiFlexi-Token header validation with the secret
+      stored encrypted in Node-RED credentials.
+    </p>
+  </description>
+  <icon type="stock">node-red-contrib-multiflexi</icon>
+  <categories>
+    <category>Finance</category>
+  </categories>
+  <url type="homepage">https://github.com/Vitexus/node-red-contrib-multiflexi</url>
+  <url type="bugtracker">https://github.com/Vitexus/node-red-contrib-multiflexi/issues</url>
+  <url type="vcs-browser">https://github.com/Vitexus/node-red-contrib-multiflexi</url>
+  <developer id="io.github.vitexus">
+    <name>VitexSoftware</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-06-09"/>
+  </releases>
+</component>

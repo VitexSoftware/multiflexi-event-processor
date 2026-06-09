@@ -1,0 +1,28 @@
+Source: node-red-contrib-multiflexi
+Section: javascript
+Priority: optional
+Maintainer: Vítězslav Dvořák <info@vitexsoftware.cz>
+Build-Depends: debhelper-compat (= 13), nodejs (>= 20), npm
+Standards-Version: 4.6.2
+Homepage: https://github.com/Vitexus/node-red-contrib-multiflexi
+Vcs-Git: https://github.com/Vitexus/node-red-contrib-multiflexi.git
+Vcs-Browser: https://github.com/Vitexus/node-red-contrib-multiflexi
+
+Package: node-red-contrib-multiflexi
+Architecture: all
+Depends: ${misc:Depends}, node-red (>= 4.0)
+Description: Node-RED nodes for visual MultiFlexi process orchestration
+ Manage relationships between MultiFlexi processes visually in Node-RED.
+ The multiflexi-eventor daemon forwards webhook changes and finished jobs
+ to these nodes, and flows schedule RunTemplates in response, turning the
+ arrows you draw into orchestration logic.
+ .
+ Provided nodes:
+  multiflexi-config      — MultiFlexi REST API connection (base URL + auth)
+  multiflexi-event       — receives forwarded events over HTTP (the source)
+  multiflexi-runtemplate — schedules a RunTemplate via POST /job/ (the target)
+  multiflexi-artifact    — splits a job.completed event into per-artifact
+                           messages for building processing chains
+ .
+ Optional X-MultiFlexi-Token header validation. Secret stored encrypted
+ in Node-RED credentials.

@@ -1,0 +1,99 @@
+[
+    {
+        "id": "mf-tab-1",
+        "type": "tab",
+        "label": "MultiFlexi Orchestration",
+        "disabled": false,
+        "info": "Demonstrates two MultiFlexi orchestration patterns:\n1. Payment received -> send confirmation RunTemplate\n2. RunTemplate output (JSON artifact) -> data-consumer RunTemplate"
+    },
+    {
+        "id": "mf-config-1",
+        "type": "multiflexi-config",
+        "name": "MultiFlexi (vyvojar)",
+        "baseUrl": "http://localhost/api/VitexSoftware/MultiFlexi/1.0.0"
+    },
+    {
+        "id": "mf-event-payment",
+        "type": "multiflexi-event",
+        "name": "Payment received",
+        "path": "/multiflexi-event",
+        "eventType": "webhook.change",
+        "evidence": "banka",
+        "operation": "create",
+        "appUuid": "",
+        "token": "",
+        "x": 170,
+        "y": 120,
+        "wires": [["mf-rt-confirm"]]
+    },
+    {
+        "id": "mf-rt-confirm",
+        "type": "multiflexi-runtemplate",
+        "name": "Payment Receipt Confirmation",
+        "server": "mf-config-1",
+        "runtemplateId": "",
+        "executor": "",
+        "scheduled": "now",
+        "env": "[{\"key\":\"DOCID\",\"value\":\"\"}]",
+        "x": 470,
+        "y": 120,
+        "wires": [["mf-debug-1"]]
+    },
+    {
+        "id": "mf-debug-1",
+        "type": "debug",
+        "name": "scheduled job",
+        "active": true,
+        "complete": "payload",
+        "x": 740,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "mf-event-done",
+        "type": "multiflexi-event",
+        "name": "Job completed",
+        "path": "/multiflexi-event",
+        "eventType": "job.completed",
+        "evidence": "",
+        "operation": "any",
+        "appUuid": "",
+        "token": "",
+        "x": 150,
+        "y": 260,
+        "wires": [["mf-artifact-1"]]
+    },
+    {
+        "id": "mf-artifact-1",
+        "type": "multiflexi-artifact",
+        "name": "JSON output",
+        "runtemplateId": "",
+        "filenamePattern": "\\.json$",
+        "x": 410,
+        "y": 260,
+        "wires": [["mf-rt-consume"]]
+    },
+    {
+        "id": "mf-rt-consume",
+        "type": "multiflexi-runtemplate",
+        "name": "Data consumer",
+        "server": "mf-config-1",
+        "runtemplateId": "",
+        "executor": "",
+        "scheduled": "now",
+        "env": "[]",
+        "x": 650,
+        "y": 260,
+        "wires": [["mf-debug-2"]]
+    },
+    {
+        "id": "mf-debug-2",
+        "type": "debug",
+        "name": "chained job",
+        "active": true,
+        "complete": "payload",
+        "x": 880,
+        "y": 260,
+        "wires": []
+    }
+]

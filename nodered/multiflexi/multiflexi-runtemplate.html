@@ -1,0 +1,104 @@
+<script type="text/javascript">
+    RED.nodes.registerType('multiflexi-runtemplate', {
+        category: 'MultiFlexi',
+        color: '#27ae60',
+        defaults: {
+            name: { value: '' },
+            server: { value: '', type: 'multiflexi-config', required: true },
+            runtemplateId: { value: '', required: true },
+            executor: { value: '' },
+            scheduled: { value: 'now' },
+            env: { value: '[]' },
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'multiflexi.svg',
+        label: function () {
+            return this.name || ('RunTemplate #' + (this.runtemplateId || '?'));
+        },
+        oneditprepare: function () {
+            const node = this;
+            $('#node-input-env-container').css('min-height', '120px').editableList({
+                addItem: function (container, i, data) {
+                    const row = $('<div/>').appendTo(container);
+                    $('<input/>', { class: 'mf-env-key', type: 'text', placeholder: 'ENV_VAR' })
+                        .css({ width: '40%', 'margin-right': '4%' })
+                        .val(data.key || '')
+                        .appendTo(row);
+                    $('<input/>', { class: 'mf-env-value', type: 'text', placeholder: 'value or msg.payload field' })
+                        .css({ width: '54%' })
+                        .val(data.value || '')
+                        .appendTo(row);
+                },
+                removable: true,
+            });
+            let env = [];
+            try {
+                env = JSON.parse(this.env || '[]');
+            } catch (e) {
+                env = [];
+            }
+            env.forEach(function (pair) {
+                $('#node-input-env-container').editableList('addItem', pair);
+            });
+        },
+        oneditsave: function () {
+            const env = [];
+            $('#node-input-env-container').editableList('items').each(function () {
+                const key = $(this).find('.mf-env-key').val();
+                const value = $(this).find('.mf-env-value').val();
+                if (key) {
+                    env.push({ key: key, value: value });
+                }
+            });
+            $('#node-input-env').val(JSON.stringify(env));
+        },
+    });
+</script>
+
+<script type="text/html" data-template-name="multiflexi-runtemplate">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Send payment confirmation" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-input-server" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-runtemplateId"><i class="fa fa-hashtag"></i> RunTemplate ID</label>
+        <input type="text" id="node-input-runtemplateId" placeholder="e.g. 15 (or msg.runtemplate_id)" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-executor"><i class="fa fa-cog"></i> Executor</label>
+        <input type="text" id="node-input-executor" placeholder="(RunTemplate default) Native / Docker …" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-scheduled"><i class="fa fa-clock-o"></i> Scheduled</label>
+        <input type="text" id="node-input-scheduled" placeholder="now or Y-m-d H:i:s" />
+    </div>
+    <div class="form-row">
+        <label><i class="fa fa-list"></i> Env overrides</label>
+        <ol id="node-input-env-container"></ol>
+    </div>
+    <input type="hidden" id="node-input-env" />
+</script>
+
+<script type="text/html" data-help-name="multiflexi-runtemplate">
+    <p>Schedules a job for a MultiFlexi RunTemplate via the REST API
+    (<code>POST /job/</code>). This is the <i>target</i> of a flow arrow.</p>
+    <h3>Input</h3>
+    <dl class="message-properties">
+        <dt class="optional">runtemplate_id <span class="property-type">number</span></dt>
+        <dd>Overrides the configured RunTemplate ID.</dd>
+        <dt class="optional">payload.env <span class="property-type">object</span></dt>
+        <dd>Environment overrides merged over the static ones (these win).</dd>
+        <dt class="optional">scheduled <span class="property-type">string</span></dt>
+        <dd><code>now</code> or a <code>Y-m-d H:i:s</code> timestamp.</dd>
+    </dl>
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>API response: <code>{ job_id, runtemplate_id, scheduled, executor, schedule_type }</code>.</dd>
+    </dl>
+</script>

@@ -51,9 +51,14 @@ class EventProcessor extends DBEngine
     private EventRule $eventRuleHelper;
 
     /**
+     * @var NodeRedBridge Outbound forwarder to Node-RED
+     */
+    private NodeRedBridge $nodeRed;
+
+    /**
      * EventProcessor constructor.
      *
-     * @param int|null $identifier Record ID
+     * @param null|int $identifier Record ID
      * @param array    $options    Additional options
      */
     public function __construct($identifier = null, $options = [])
@@ -64,6 +69,22 @@ class EventProcessor extends DBEngine
         $this->cliPath = \Ease\Shared::cfg('MULTIFLEXI_CLI_PATH', 'multiflexi-cli');
         $this->eventSourceHelper = new EventSource();
         $this->eventRuleHelper = new EventRule();
+        $this->nodeRed = new NodeRedBridge();
+    }
+
+    /**
+     * Whether changes should be forwarded to Node-RED.
+     *
+     * Controlled by NODERED_FORWARD_CHANGES (default true when a Node-RED URL
+     * is configured).
+     */
+    public function forwardsChangesToNodeRed(): bool
+    {
+        if (!$this->nodeRed->isEnabled()) {
+            return false;
+        }
+
+        return (bool) \Ease\Shared::cfg('NODERED_FORWARD_CHANGES', true);
     }
 
     /**
@@ -115,8 +136,9 @@ class EventProcessor extends DBEngine
 
         $sourceId = (int) $sourceData['id'];
         $rules = $this->eventRuleHelper->getRulesForSource($sourceId);
+        $forwardToNodeRed = $this->forwardsChangesToNodeRed();
 
-        if (empty($rules)) {
+        if (empty($rules) && !$forwardToNodeRed) {
             $this->addStatusMessage(
                 sprintf(_('No enabled rules for source "%s", skipping %d change(s)'), $sourceData['name'] ?? $sourceId, \count($changes)),
                 'debug',
@@ -129,6 +151,10 @@ class EventProcessor extends DBEngine
 
         foreach ($changes as $change) {
             try {
+                if ($forwardToNodeRed) {
+                    $this->nodeRed->forwardChange($change, $sourceData);
+                }
+
                 $matched = $this->processChange($change, $rules, $source);
 
                 if ($matched) {
@@ -153,9 +179,9 @@ class EventProcessor extends DBEngine
     /**
      * Match a single change against rules and schedule jobs for matches.
      *
-     * @param array<string, mixed>        $change Change record from changes_cache
-     * @param array<int, array>           $rules  Pre-loaded rule records for this source
-     * @param EventSource                 $source The event source instance
+     * @param array<string, mixed> $change Change record from changes_cache
+     * @param array<int, array>    $rules  Pre-loaded rule records for this source
+     * @param EventSource          $source The event source instance
      *
      * @return bool True if at least one rule matched
      */
@@ -209,12 +235,14 @@ class EventProcessor extends DBEngine
             $configArgs[] = escapeshellarg($key.'='.$value);
         }
 
+        // Note: run-template:schedule derives schedule_type (adhoc/cli) from the
+        // schedule time itself; it has no --schedule_type option. SCHEDULE_TYPE
+        // is retained for event metadata forwarded to Node-RED.
         $command = sprintf(
-            '%s runtemplate schedule --id %d %s --schedule_time now --executor Native --schedule_type %s -f json',
+            '%s run-template:schedule --id %d %s --schedule_time now --executor Native -f json',
             escapeshellcmd($this->cliPath),
             $runtemplateId,
             implode(' ', $configArgs),
-            self::SCHEDULE_TYPE,
         );
 
         $output = [];

@@ -1,0 +1,50 @@
+<script type="text/javascript">
+    RED.nodes.registerType('multiflexi-artifact', {
+        category: 'MultiFlexi',
+        color: '#e67e22',
+        defaults: {
+            name: { value: '' },
+            runtemplateId: { value: '' },
+            filenamePattern: { value: '' },
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'multiflexi.svg',
+        label: function () {
+            return this.name || 'Artifact'
+                + (this.runtemplateId ? ' #' + this.runtemplateId : '');
+        },
+    });
+</script>
+
+<script type="text/html" data-template-name="multiflexi-artifact">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Output JSON" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-runtemplateId"><i class="fa fa-hashtag"></i> Producer RT</label>
+        <input type="text" id="node-input-runtemplateId" placeholder="(any) producing RunTemplate ID" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-filenamePattern"><i class="fa fa-filter"></i> Filename</label>
+        <input type="text" id="node-input-filenamePattern" placeholder="(any) regex e.g. \\.json$" />
+    </div>
+</script>
+
+<script type="text/html" data-help-name="multiflexi-artifact">
+    <p>Splits a <code>job.completed</code> event into one message per produced
+    artifact — the <i>output</i> side of a processing chain. Wire its output to
+    a <b>multiflexi-runtemplate</b> node to launch a data-consumer RunTemplate.</p>
+    <h3>Filters</h3>
+    <p><b>Producer RT</b> limits to artifacts from a specific producing
+    RunTemplate; <b>Filename</b> is an optional regular expression matched
+    against the artifact filename.</p>
+    <h3>Output (per artifact)</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>The artifact descriptor: <code>{ id, filename, content_type, note, created_at }</code>.</dd>
+        <dt>job_id / runtemplate_id / app_uuid</dt>
+        <dd>Context copied from the originating job event.</dd>
+    </dl>
+</script>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+  <!-- Node-RED palette glyph: a source node branching to two targets -->
+  <g fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round">
+    <path d="M9 20 H17"/>
+    <path d="M23 13 H31"/>
+    <path d="M23 27 H31"/>
+    <path d="M17 20 C20 20 20 13 23 13"/>
+    <path d="M17 20 C20 20 20 27 23 27"/>
+  </g>
+  <g fill="#ffffff">
+    <circle cx="8" cy="20" r="3.4"/>
+    <circle cx="32" cy="13" r="3.4"/>
+    <circle cx="32" cy="27" r="3.4"/>
+  </g>
+</svg>

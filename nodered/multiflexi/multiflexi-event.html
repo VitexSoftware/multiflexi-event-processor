@@ -1,0 +1,84 @@
+<script type="text/javascript">
+    RED.nodes.registerType('multiflexi-event', {
+        category: 'MultiFlexi',
+        color: '#c0392b',
+        defaults: {
+            name: { value: '' },
+            path: { value: '/multiflexi-event', required: true },
+            eventType: { value: 'any' },
+            evidence: { value: '' },
+            operation: { value: 'any' },
+            appUuid: { value: '' },
+        },
+        credentials: {
+            token: { type: 'password' },
+        },
+        inputs: 0,
+        outputs: 1,
+        icon: 'multiflexi.svg',
+        label: function () {
+            return this.name || ('MultiFlexi: ' + (this.eventType === 'any' ? 'event' : this.eventType));
+        },
+        labelStyle: function () {
+            return this.name ? 'node_label_italic' : '';
+        },
+    });
+</script>
+
+<script type="text/html" data-template-name="multiflexi-event">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Payment received" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-path"><i class="fa fa-globe"></i> HTTP Path</label>
+        <input type="text" id="node-input-path" placeholder="/multiflexi-event" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-eventType"><i class="fa fa-filter"></i> Event Type</label>
+        <select id="node-input-eventType">
+            <option value="any">Any</option>
+            <option value="webhook.change">Webhook change</option>
+            <option value="job.completed">Job completed</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-evidence"><i class="fa fa-database"></i> Evidence</label>
+        <input type="text" id="node-input-evidence" placeholder="(any) e.g. banka" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation"><i class="fa fa-bolt"></i> Operation</label>
+        <select id="node-input-operation">
+            <option value="any">Any</option>
+            <option value="create">create</option>
+            <option value="update">update</option>
+            <option value="delete">delete</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-appUuid"><i class="fa fa-cube"></i> App UUID</label>
+        <input type="text" id="node-input-appUuid" placeholder="(any)" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-token"><i class="fa fa-key"></i> Token</label>
+        <input type="password" id="node-input-token" placeholder="(optional) X-MultiFlexi-Token" />
+    </div>
+</script>
+
+<script type="text/html" data-help-name="multiflexi-event">
+    <p>Receives events forwarded by the MultiFlexi event processor
+    (<code>multiflexi-eventor</code>) and emits them into the flow.</p>
+    <p>Configure the daemon with
+    <code>NODERED_WEBHOOK_URL=http://this-node-red:1880/multiflexi-event</code>
+    (matching the <b>HTTP Path</b>).</p>
+    <h3>Filters</h3>
+    <p>Only events matching <b>Event Type</b>, <b>Evidence</b>, <b>Operation</b>
+    and <b>App UUID</b> are emitted (blank/"any" = match all).</p>
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>The full event JSON (evidence, operation, recordid, job_id, artifacts, …).</dd>
+        <dt>event <span class="property-type">string</span></dt>
+        <dd>The event type.</dd>
+    </dl>
+</script>

@@ -1,0 +1,32 @@
+#!/usr/bin/make -f
+export DH_VERBOSE = 1
+
+PKG = node-red-contrib-multiflexi
+DEST = debian/$(PKG)/usr/share/nodejs/$(PKG)
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	npm install --production --ignore-scripts
+
+override_dh_auto_install:
+	install -d $(DEST)/multiflexi
+	cp -a multiflexi/. $(DEST)/multiflexi/
+	cp -a package.json README.md $(DEST)/
+	cp -a icons $(DEST)/
+	[ -d examples ] && cp -a examples $(DEST)/ || true
+	[ -d node_modules ] && \
+		install -d $(DEST)/node_modules && \
+		cp -a node_modules/. $(DEST)/node_modules/ \
+		|| true
+	install -d debian/$(PKG)/usr/share/icons/hicolor/scalable/apps
+	install -m 644 node-red-contrib-multiflexi.svg \
+		debian/$(PKG)/usr/share/icons/hicolor/scalable/apps/
+	install -d debian/$(PKG)/usr/share/metainfo
+	install -m 644 debian/io.github.vitexus.node_red_contrib_multiflexi.metainfo.xml \
+		debian/$(PKG)/usr/share/metainfo/
+
+override_dh_shlibdeps:
+
+override_dh_strip:

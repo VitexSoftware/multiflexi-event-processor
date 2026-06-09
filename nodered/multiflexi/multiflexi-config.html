@@ -1,0 +1,43 @@
+<script type="text/javascript">
+    RED.nodes.registerType('multiflexi-config', {
+        category: 'config',
+        defaults: {
+            name: { value: '' },
+            baseUrl: { value: '', required: true },
+        },
+        credentials: {
+            username: { type: 'text' },
+            password: { type: 'password' },
+        },
+        label: function () {
+            return this.name || this.baseUrl || 'MultiFlexi';
+        },
+    });
+</script>
+
+<script type="text/html" data-template-name="multiflexi-config">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="My MultiFlexi" />
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-baseUrl"><i class="fa fa-globe"></i> API Base URL</label>
+        <input type="text" id="node-config-input-baseUrl"
+               placeholder="http://host/api/VitexSoftware/MultiFlexi/1.0.0" />
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-username"><i class="fa fa-user"></i> Username</label>
+        <input type="text" id="node-config-input-username" />
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
+        <input type="password" id="node-config-input-password" />
+    </div>
+</script>
+
+<script type="text/html" data-help-name="multiflexi-config">
+    <p>Connection to a MultiFlexi REST API instance.</p>
+    <p>The <b>API Base URL</b> must include the version path, for example
+    <code>http://multiflexi.example.com/api/VitexSoftware/MultiFlexi/1.0.0</code>.
+    Authentication uses HTTP Basic auth with the configured username/password.</p>
+</script>

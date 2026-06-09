@@ -68,9 +68,11 @@ All source classes live under `src/MultiFlexi/` with PSR-4 namespace `MultiFlexi
 
 | Class | Table | Role |
 |---|---|---|
-| `EventProcessor` | `event_source` | Main engine: calls `pollAndProcess()` which iterates enabled sources, loads matching rules, calls `scheduleJob()` |
+| `EventProcessor` | `event_source` | Main engine: calls `pollAndProcess()` which iterates enabled sources, loads matching rules, calls `scheduleJob()`; forwards changes to Node-RED when enabled |
 | `EventSource` | `event_source` | Represents a webhook adapter database connection; provides `getUnprocessedChanges()`, `wipeCacheRecord()`, `updateLastProcessed()`, `isReachable()` |
 | `EventRule` | `event_rule` | Represents a matching rule; `matches(array $change)` checks `evidence`+`operation` (null evidence or `OPERATION_ANY` act as wildcards); `buildEnvOverrides()` maps change fields to env vars injected into the job |
+| `NodeRedBridge` | — | Forwards normalized event JSON (`webhook.change`, `job.completed`) to a Node-RED HTTP-in endpoint via cURL. Disabled when `NODERED_WEBHOOK_URL` is empty |
+| `JobWatcher` | `job` | Polls finished jobs and forwards `job.completed` events (with artifact metadata) to Node-RED; persists a high-water mark in `NODERED_JOB_STATE_FILE` |
 
 All three extend `DBEngine` from `vitexsoftware/multiflexi-core` (FluentPDO-backed Ease framework).
 
@@ -134,6 +136,14 @@ Daemon-specific keys:
 - `MULTIFLEXI_DAEMONIZE` — `true` to loop, `false` for single-pass (useful for testing)
 - `MULTIFLEXI_CYCLE_PAUSE` — seconds between poll cycles (default `10`)
 - `MULTIFLEXI_CLI_PATH` — path to `multiflexi-cli` binary (default: `multiflexi-cli`)
+
+Node-RED bridge (see `nodered/` and `source/integrations/node-red.rst` in the docs):
+- `NODERED_WEBHOOK_URL` — Node-RED HTTP-in URL; empty disables the bridge
+- `NODERED_TOKEN` — optional shared secret sent as `X-MultiFlexi-Token`
+- `NODERED_TIMEOUT` — request timeout seconds (default `5`)
+- `NODERED_FORWARD_CHANGES` — forward webhook changes (default `true` when URL set)
+- `NODERED_JOB_STATE_FILE` — persisted last-forwarded job id (default `/var/lib/multiflexi-eventor/last_forwarded_job`)
+- `MULTIFLEXI_EVENT_BATCH` / `MULTIFLEXI_JOB_BATCH` — per-cycle batch limits (default `100`)
 
 Optional observability: `ZABBIX_SERVER`, `ZABBIX_HOST`, `OTEL_ENABLED`, `OTEL_EXPORTER_OTLP_ENDPOINT`
 
