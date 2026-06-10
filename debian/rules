@@ -18,7 +18,9 @@ override_dh_install:
 	dh_install
 	# Use the shipped static autoloader (system package autoloaders + PSR-4)
 	# instead of a composer-debian vendor dir that is never populated.
-	sed -i -e 's/.\.\/vendor/\/usr\/lib\/multiflexi-eventor/g' debian/multiflexi-eventor*/usr/lib/multiflexi-eventor/*.php
+	# autoload.php + composer.json live in /usr/lib/php/multiflexi-eventor;
+	# the daemon and its classes stay in /usr/lib/multiflexi-eventor.
+	sed -i -e 's/.\.\/vendor/\/usr\/lib\/php\/multiflexi-eventor/g' debian/multiflexi-eventor*/usr/lib/multiflexi-eventor/*.php
 	sed -i -e 's/\.\.\/\.env/\/etc\/multiflexi\/\multiflexi\.env/g' debian/multiflexi-eventor*/usr/lib/multiflexi-eventor/*.php
-	sed -i "s|'unknown'|'$(PKG_SOURCE)'|" debian/multiflexi-eventor/usr/lib/multiflexi-eventor/autoload.php
-	sed -i "s|'0.0.0'|'$(PKG_VERSION)'|"  debian/multiflexi-eventor/usr/lib/multiflexi-eventor/autoload.php
+	sed -i "s|'unknown'|'$(PKG_SOURCE)'|" debian/multiflexi-eventor/usr/lib/php/multiflexi-eventor/autoload.php
+	sed -i "s|'0.0.0'|'$(PKG_VERSION)'|"  debian/multiflexi-eventor/usr/lib/php/multiflexi-eventor/autoload.php

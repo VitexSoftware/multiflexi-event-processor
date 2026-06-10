@@ -13,8 +13,16 @@ multiflexi-eventor (0.2.2) UNRELEASED; urgency=medium
     InstalledVersions) and point daemon.php at it, instead of a
     composer-debian /var/lib/composer vendor dir that was never
     populated (daemon failed to start with missing autoload.php).
+  * Align Debian layout with multiflexi-zabbix: install autoload.php and
+    composer.json into the conventional /usr/lib/php/multiflexi-eventor
+    library dir, keep the daemon and its classes in
+    /usr/lib/multiflexi-eventor, and resolve PSR-4 classes by absolute
+    path. Drop the unused debian/conf/composer.json descriptor.
+  * Add debconf prompts for the optional Node-RED bridge
+    (NODERED_WEBHOOK_URL / NODERED_TOKEN / NODERED_FORWARD_CHANGES),
+    written to /etc/multiflexi/multiflexi.env on configure.
 
- -- Vítězslav Dvořák <info@vitexsoftware.cz>  Mon, 08 Jun 2026 16:16:03 +0200
+ -- Vítězslav Dvořák <info@vitexsoftware.cz>  Tue, 10 Jun 2026 09:00:00 +0200
 
 multiflexi-eventor (0.1.0) unstable; urgency=low
 

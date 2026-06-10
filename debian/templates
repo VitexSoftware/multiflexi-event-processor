@@ -1,0 +1,21 @@
+Template: multiflexi-eventor/nodered_webhook_url
+Type: string
+Description: Node-RED HTTP-in webhook URL:
+ The Event Processor can forward webhook change events and finished jobs to a
+ Node-RED HTTP-in endpoint.
+ .
+ Enter the full URL of the Node-RED HTTP-in node (for example
+ https://nodered.example.com/multiflexi). Leave empty to disable the bridge.
+
+Template: multiflexi-eventor/nodered_token
+Type: password
+Description: Node-RED shared secret token:
+ Optional secret sent as the X-MultiFlexi-Token header with every request to
+ the Node-RED endpoint. Leave empty to send no token.
+
+Template: multiflexi-eventor/nodered_forward_changes
+Type: boolean
+Default: true
+Description: Forward incoming webhook changes to Node-RED?
+ If true, incoming webhook change events are forwarded to Node-RED in addition
+ to finished jobs. If false, only finished jobs are forwarded.

@@ -1,6 +1,36 @@
 #!/bin/sh
 # If no user provided script is activated in this file, you should remove this file.
 set -e
+. /usr/share/debconf/confmodule
+
+if [ "$1" = "configure" ]; then
+    db_get multiflexi-eventor/nodered_webhook_url || true
+    NODERED_WEBHOOK_URL="$RET"
+    db_get multiflexi-eventor/nodered_token || true
+    NODERED_TOKEN="$RET"
+    db_get multiflexi-eventor/nodered_forward_changes || true
+    NODERED_FORWARD_CHANGES="$RET"
+
+    CONFIG_DIR="/etc/multiflexi"
+    CONFIG_FILE="$CONFIG_DIR/multiflexi.env"
+
+    [ -d "$CONFIG_DIR" ] || mkdir -p "$CONFIG_DIR"
+    touch "$CONFIG_FILE"
+
+    update_config() {
+        key=$1
+        value=$2
+        if grep -q "^$key=" "$CONFIG_FILE"; then
+            sed -i "s|^$key=.*|$key=$value|" "$CONFIG_FILE"
+        else
+            echo "$key=$value" >> "$CONFIG_FILE"
+        fi
+    }
+
+    [ -n "$NODERED_WEBHOOK_URL" ] && update_config "NODERED_WEBHOOK_URL" "$NODERED_WEBHOOK_URL"
+    [ -n "$NODERED_TOKEN" ] && update_config "NODERED_TOKEN" "$NODERED_TOKEN"
+    [ -n "$NODERED_FORWARD_CHANGES" ] && update_config "NODERED_FORWARD_CHANGES" "$NODERED_FORWARD_CHANGES"
+fi
 
 update-multiflexi-env
 

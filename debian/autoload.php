@@ -23,8 +23,9 @@ spl_autoload_register(function ($class) {
     // Replace namespace separators with directory separators
     $relativePath = str_replace('\\', '/', $relativeClass) . '.php';
 
-    // Check if file exists locally before requiring it
-    $file = __DIR__ . '/MultiFlexi/' . $relativePath;
+    // Classes are installed separately from this autoloader (which lives in
+    // /usr/lib/php/multiflexi-eventor), so reference them by absolute path.
+    $file = '/usr/lib/multiflexi-eventor/MultiFlexi/' . $relativePath;
     if (file_exists($file)) {
         require_once $file;
     }

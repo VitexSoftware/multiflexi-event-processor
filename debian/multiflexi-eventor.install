@@ -1,6 +1,6 @@
-debian/tmp/composer.json                usr/lib/multiflexi-eventor
-debian/autoload.php			usr/lib/multiflexi-eventor
-src/*.php				usr/lib/multiflexi-eventor
+debian/tmp/composer.json                usr/lib/php/multiflexi-eventor
+debian/autoload.php			usr/lib/php/multiflexi-eventor
+src/daemon.php				usr/lib/multiflexi-eventor
 src/MultiFlexi/*.php			usr/lib/multiflexi-eventor/MultiFlexi
 multiflexi-eventor.svg	usr/share/icons/hicolor/scalable/apps/
 eu.multiflexi.multiflexi_eventor.metainfo.xml	usr/share/metainfo/

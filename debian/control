@@ -17,6 +17,7 @@ Architecture: all
 Multi-Arch: foreign
 Depends:
  ${misc:Depends},
+ debconf (>= 0.5),
  multiflexi-sqlite (>= 2.4.1) | multiflexi-mysql (>= 2.4.1) | multiflexi-pgsql (>= 2.4.1), php-vitexsoftware-multiflexi-core, multiflexi-cli (>= 2.2.0)
 Suggests: multiflexi-executor, multiflexi-scheduler
 Description: Event-driven job triggering for MultiFlexi

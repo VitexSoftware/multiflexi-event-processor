@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+. /usr/share/debconf/confmodule
+
+db_input high multiflexi-eventor/nodered_webhook_url || true
+db_go || true
+
+# Only ask for the token and forward toggle when a webhook URL is configured.
+db_get multiflexi-eventor/nodered_webhook_url || true
+if [ -n "$RET" ]; then
+    db_input high multiflexi-eventor/nodered_token || true
+    db_input high multiflexi-eventor/nodered_forward_changes || true
+    db_go || true
+fi
