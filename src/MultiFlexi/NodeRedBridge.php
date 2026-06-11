@@ -25,7 +25,8 @@ namespace MultiFlexi;
  * is disabled and all methods become no-ops.
  *
  * Configuration keys (Ease\Shared::cfg):
- *  - NODERED_WEBHOOK_URL — target HTTP-in URL (empty disables the bridge)
+ *  - NODERED_WEBHOOK_URL — target HTTP-in URL for events (empty disables the bridge)
+ *  - NODERED_CATALOG_URL — target HTTP-in URL for the config catalog (empty disables it)
  *  - NODERED_TOKEN       — optional shared secret sent as X-MultiFlexi-Token
  *  - NODERED_TIMEOUT     — request timeout in seconds (default 5)
  *
@@ -35,11 +36,17 @@ class NodeRedBridge extends \Ease\Sand
 {
     public const EVENT_CHANGE = 'webhook.change';
     public const EVENT_JOB_COMPLETED = 'job.completed';
+    public const EVENT_CATALOG = 'catalog.update';
 
     /**
      * @var string Target Node-RED HTTP-in URL ('' = disabled)
      */
     private string $url;
+
+    /**
+     * @var string Target Node-RED catalog HTTP-in URL ('' = disabled)
+     */
+    private string $catalogUrl;
 
     /**
      * @var string Optional shared secret header value
@@ -58,18 +65,41 @@ class NodeRedBridge extends \Ease\Sand
     {
         $this->setObjectName('NodeRedBridge');
         $this->url = (string) \Ease\Shared::cfg('NODERED_WEBHOOK_URL', '');
+        $this->catalogUrl = (string) \Ease\Shared::cfg('NODERED_CATALOG_URL', '');
         $this->token = (string) \Ease\Shared::cfg('NODERED_TOKEN', '');
         $this->timeout = (int) \Ease\Shared::cfg('NODERED_TIMEOUT', 5);
     }
 
     /**
-     * Whether forwarding is configured/enabled.
+     * Whether event forwarding is configured/enabled.
      *
      * @return bool True when a target URL is set
      */
     public function isEnabled(): bool
     {
         return $this->url !== '';
+    }
+
+    /**
+     * Whether the catalog push is configured/enabled.
+     *
+     * @return bool True when a catalog target URL is set
+     */
+    public function catalogIsEnabled(): bool
+    {
+        return $this->catalogUrl !== '';
+    }
+
+    /**
+     * Push the MultiFlexi configuration catalog to Node-RED.
+     *
+     * @param array<string, mixed> $catalog Catalog payload from NodeRedCatalog::build()
+     *
+     * @return bool True on a 2xx response
+     */
+    public function forwardCatalog(array $catalog): bool
+    {
+        return $this->postTo($this->catalogUrl, self::EVENT_CATALOG, $catalog);
     }
 
     /**
@@ -129,7 +159,21 @@ class NodeRedBridge extends \Ease\Sand
      */
     public function send(string $eventType, array $data): bool
     {
-        if (!$this->isEnabled()) {
+        return $this->postTo($this->url, $eventType, $data);
+    }
+
+    /**
+     * Post an event payload to a specific Node-RED endpoint.
+     *
+     * @param string               $url       Target HTTP-in URL ('' = disabled, no-op)
+     * @param string               $eventType One of the EVENT_* constants
+     * @param array<string, mixed> $data      Event-specific payload fields
+     *
+     * @return bool True on a 2xx response, false otherwise (including disabled)
+     */
+    private function postTo(string $url, string $eventType, array $data): bool
+    {
+        if ($url === '') {
             return false;
         }
 
@@ -143,7 +187,7 @@ class NodeRedBridge extends \Ease\Sand
         }
 
         $ch = curl_init();
-        curl_setopt($ch, \CURLOPT_URL, $this->url);
+        curl_setopt($ch, \CURLOPT_URL, $url);
         curl_setopt($ch, \CURLOPT_POST, true);
         curl_setopt($ch, \CURLOPT_POSTFIELDS, $body);
         curl_setopt($ch, \CURLOPT_HTTPHEADER, $headers);

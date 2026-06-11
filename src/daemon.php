@@ -113,6 +113,57 @@ if ($nodeRed->isEnabled()) {
     $processor->addStatusMessage(_('Node-RED bridge enabled: forwarding events to the configured endpoint'), 'info');
 }
 
+$nodeRedCatalog = new \MultiFlexi\NodeRedCatalog();
+$catalogInterval = (int) Shared::cfg('NODERED_CATALOG_INTERVAL', 300);
+$lastCatalogHash = '';
+$lastCatalogPush = 0;
+
+if ($nodeRed->catalogIsEnabled()) {
+    $processor->addStatusMessage(_('Node-RED catalog push enabled: publishing companies, run-templates and credentials'), 'info');
+}
+
+/**
+ * Build and push the MultiFlexi configuration catalog to Node-RED.
+ *
+ * Throttled to NODERED_CATALOG_INTERVAL seconds and skipped when the catalog
+ * content is unchanged (md5 compare), unless $force is set (startup push).
+ */
+$pushCatalog = static function (bool $force) use (&$nodeRed, $nodeRedCatalog, &$lastCatalogHash, &$lastCatalogPush, $catalogInterval, $processor): void {
+    if (!$nodeRed->catalogIsEnabled()) {
+        return;
+    }
+
+    $now = time();
+
+    if (!$force && ($now - $lastCatalogPush) < $catalogInterval) {
+        return;
+    }
+
+    $lastCatalogPush = $now;
+    $catalog = $nodeRedCatalog->build();
+    $hash = md5((string) json_encode($catalog));
+
+    if (!$force && $hash === $lastCatalogHash) {
+        return; // nothing changed since the last push
+    }
+
+    if ($nodeRed->forwardCatalog($catalog)) {
+        $lastCatalogHash = $hash;
+        $processor->addStatusMessage(sprintf(
+            _('Pushed MultiFlexi catalog to Node-RED (%d companies, %d run-templates, %d credentials)'),
+            \count($catalog['companies']),
+            \count($catalog['runtemplates']),
+            \count($catalog['credentials']),
+        ), 'success');
+    }
+};
+
+try {
+    $pushCatalog(true);
+} catch (\Throwable $e) {
+    error_log('Initial Node-RED catalog push failed: '.$e->getMessage());
+}
+
 do {
     try {
         $processedCount = $processor->pollAndProcess();
@@ -127,6 +178,9 @@ do {
         if ($forwardedJobs > 0) {
             $processor->addStatusMessage(sprintf(_('Forwarded %d finished job(s) to Node-RED'), $forwardedJobs), 'success');
         }
+
+        // Periodically republish the configuration catalog to Node-RED.
+        $pushCatalog(false);
     } catch (\PDOException $e) {
         error_log('Database error: '.$e->getMessage());
 
