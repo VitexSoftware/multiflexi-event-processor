@@ -3,6 +3,9 @@ multiflexi-eventor (0.2.2) UNRELEASED; urgency=medium
   [ vitex ]
   * Move EventSource/EventRule domain classes to multiflexi-core
   * EventProcessor engine with poll/match/schedule loop
+  * NodeRedCatalog sends entity identifiers only (no base64 icons); Node-RED
+    renders icons from the MultiFlexi web image endpoints, keeping the catalog
+    push payload small.
 
   [ Vítězslav Dvořák ]
   * Ship root composer.json as the deb runtime descriptor instead of

@@ -20,25 +20,15 @@ namespace MultiFlexi;
  *
  * The catalog enumerates the building blocks a Node-RED flow can reference:
  * all companies, all enabled run-templates and all credentials. Each entry
- * carries the same icon the entity has in MultiFlexi (company logo, the
- * run-template's application image, the credential-type logo) resolved to a
- * data: URI so Node-RED can render it without reaching back to MultiFlexi.
+ * carries the identifiers Node-RED needs to fetch the matching icon from the
+ * MultiFlexi web image endpoints (appimage.php / companylogo.php /
+ * credentialimage.php) — the icon bytes are NOT embedded, keeping the payload
+ * small.
  *
  * @author Vítězslav Dvořák <info@vitexsoftware.cz>
  */
 class NodeRedCatalog
 {
-    /**
-     * Directories searched for bare-filename icons (credential-type logos).
-     *
-     * @var array<int, string>
-     */
-    private array $imageDirs = [
-        '/usr/share/multiflexi/images/',
-        '/usr/share/multiflexi-web/images/',
-        '/usr/share/multiflexi/',
-    ];
-
     /**
      * Build the full catalog payload.
      *
@@ -54,7 +44,8 @@ class NodeRedCatalog
     }
 
     /**
-     * All defined companies with their logo.
+     * All defined companies. Node-RED renders the logo via
+     * companylogo.php?id={id}.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -68,7 +59,6 @@ class NodeRedCatalog
                 'name' => (string) ($row['name'] ?? ''),
                 'slug' => $row['slug'] ?? null,
                 'enabled' => (bool) ($row['enabled'] ?? false),
-                'icon' => $this->resolveIcon($row['logo'] ?? null),
             ];
         }
 
@@ -76,34 +66,32 @@ class NodeRedCatalog
     }
 
     /**
-     * Enabled run-templates with the icon of their application.
+     * Enabled run-templates. Node-RED renders the application icon via
+     * appimage.php?uuid={app_uuid}.
      *
      * @return array<int, array<string, mixed>>
      */
     private function runtemplates(): array
     {
-        $rows = (new RunTemplate())->listingQuery()->fetchAll();
-        $appIcons = $this->applicationIcons();
+        $appUuids = $this->applicationUuids();
 
         $result = [];
 
-        foreach ($rows as $row) {
+        foreach ((new RunTemplate())->listingQuery()->fetchAll() as $row) {
             if (empty($row['active'])) {
                 continue; // only enabled run-templates
             }
 
             $appId = isset($row['app_id']) ? (int) $row['app_id'] : 0;
-            $app = $appIcons[$appId] ?? ['uuid' => null, 'icon' => null];
 
             $result[] = [
                 'id' => (int) $row['id'],
                 'name' => (string) ($row['name'] ?? ''),
                 'company_id' => isset($row['company_id']) ? (int) $row['company_id'] : null,
                 'app_id' => $appId,
-                'app_uuid' => $app['uuid'],
+                'app_uuid' => $appUuids[$appId] ?? null,
                 'executor' => $row['executor'] ?? null,
                 'active' => true,
-                'icon' => $app['icon'],
             ];
         }
 
@@ -111,27 +99,26 @@ class NodeRedCatalog
     }
 
     /**
-     * All credentials with the logo of their credential type.
+     * All credentials. Node-RED renders the credential-type logo via
+     * credentialimage.php?id={id}.
      *
      * @return array<int, array<string, mixed>>
      */
     private function credentials(): array
     {
-        $types = $this->credentialTypes();
+        $typeNames = $this->credentialTypeNames();
 
         $result = [];
 
         foreach ((new Credential())->listingQuery()->fetchAll() as $row) {
             $typeId = isset($row['credential_type_id']) ? (int) $row['credential_type_id'] : 0;
-            $type = $types[$typeId] ?? ['name' => null, 'icon' => null];
 
             $result[] = [
                 'id' => (int) $row['id'],
                 'name' => (string) ($row['name'] ?? ''),
                 'company_id' => isset($row['company_id']) ? (int) $row['company_id'] : null,
                 'credential_type_id' => $typeId ?: null,
-                'type_name' => $type['name'],
-                'icon' => $type['icon'],
+                'type_name' => $typeNames[$typeId] ?? null,
             ];
         }
 
@@ -139,86 +126,34 @@ class NodeRedCatalog
     }
 
     /**
-     * Map of app_id => ['uuid' => ?string, 'icon' => ?string] for icon lookup.
+     * Map of app_id => uuid (for building appimage.php URLs).
      *
-     * @return array<int, array{uuid: ?string, icon: ?string}>
+     * @return array<int, ?string>
      */
-    private function applicationIcons(): array
+    private function applicationUuids(): array
     {
         $map = [];
 
         foreach ((new Application())->listingQuery()->fetchAll() as $row) {
-            $uuid = $row['uuid'] ?? null;
-            // Prefer the inline image column; fall back to the <uuid>.svg file
-            // MultiFlexi serves from its images dir (appimage.php convention).
-            $icon = $this->resolveIcon($row['image'] ?? null)
-                ?? ($uuid ? $this->resolveIcon($uuid.'.svg') : null);
-
-            $map[(int) $row['id']] = [
-                'uuid' => $uuid,
-                'icon' => $icon,
-            ];
+            $map[(int) $row['id']] = $row['uuid'] ?? null;
         }
 
         return $map;
     }
 
     /**
-     * Map of credential_type_id => ['name' => ?string, 'icon' => ?string].
+     * Map of credential_type_id => name.
      *
-     * Uses CredentialType::getLogo() so the prototype logo fallback applies.
-     *
-     * @return array<int, array{name: ?string, icon: ?string}>
+     * @return array<int, ?string>
      */
-    private function credentialTypes(): array
+    private function credentialTypeNames(): array
     {
         $map = [];
 
         foreach ((new CredentialType())->listingQuery()->fetchAll() as $row) {
-            $id = (int) $row['id'];
-            $type = new CredentialType($id);
-            $map[$id] = [
-                'name' => $row['name'] ?? null,
-                'icon' => $this->resolveIcon($type->getLogo()),
-            ];
+            $map[(int) $row['id']] = $row['name'] ?? null;
         }
 
         return $map;
-    }
-
-    /**
-     * Normalise an icon reference to something a browser can render.
-     *
-     * Passes through data: URIs and http(s) URLs unchanged; resolves a bare
-     * filename (e.g. "vaultwarden.svg") against the MultiFlexi image dirs and
-     * inlines it as a base64 data: URI. Returns null when nothing is found.
-     */
-    private function resolveIcon(?string $raw): ?string
-    {
-        $raw = trim((string) $raw);
-
-        if ($raw === '') {
-            return null;
-        }
-
-        if (str_starts_with($raw, 'data:')
-            || str_starts_with($raw, 'http://')
-            || str_starts_with($raw, 'https://')) {
-            return $raw;
-        }
-
-        foreach ($this->imageDirs as $dir) {
-            $file = $dir.$raw;
-
-            if (is_file($file)) {
-                $mime = str_ends_with(strtolower($raw), '.svg')
-                    ? 'image/svg+xml'
-                    : (\function_exists('mime_content_type') ? (mime_content_type($file) ?: 'application/octet-stream') : 'application/octet-stream');
-
-                return 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($file));
-            }
-        }
-
-        return null;
     }
 }
