@@ -58,6 +58,7 @@ class NodeRedCatalog
                 'id' => (int) $row['id'],
                 'name' => (string) ($row['name'] ?? ''),
                 'slug' => $row['slug'] ?? null,
+                'code' => $row['code'] ?? null,
                 'enabled' => (bool) ($row['enabled'] ?? false),
             ];
         }
@@ -91,6 +92,8 @@ class NodeRedCatalog
                 'app_id' => $appId,
                 'app_uuid' => $appUuids[$appId] ?? null,
                 'executor' => $row['executor'] ?? null,
+                'interv' => $row['interv'] ?? null,
+                'delay' => isset($row['delay']) ? (int) $row['delay'] : null,
                 'active' => true,
             ];
         }
