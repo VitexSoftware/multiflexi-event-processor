@@ -1,10 +1,9 @@
-#!/bin/sh
-# If this exists, it is installed into lib/systemd/system/multiflexi-eventor.service
-# See dh_systemd_enable(1).
-
 [Unit]
 Description=MultiFlexi Event Processor - event-driven job triggering
-After=multi-user.target
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=120s
+StartLimitBurst=5
 
 [Service]
 User=multiflexi
