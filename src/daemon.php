@@ -107,6 +107,7 @@ waitForDatabase();
 $processor = new EventProcessor();
 $nodeRed = new \MultiFlexi\NodeRedBridge();
 $jobWatcher = new \MultiFlexi\JobWatcher($nodeRed);
+$jobChainProcessor = new \MultiFlexi\JobChainProcessor();
 $processor->logBanner(sprintf(_('MultiFlexi Eventor Daemon %s started'), Shared::appVersion()));
 
 if ($nodeRed->isEnabled()) {
@@ -179,6 +180,13 @@ do {
             $processor->addStatusMessage(sprintf(_('Forwarded %d finished job(s) to Node-RED'), $forwardedJobs), 'success');
         }
 
+        // Actually execute job-to-job chaining rules (produces -> consumes)
+        $chainedJobs = $jobChainProcessor->processFinishedJobs();
+
+        if ($chainedJobs > 0) {
+            $processor->addStatusMessage(sprintf(_('Scheduled %d chained job(s)'), $chainedJobs), 'success');
+        }
+
         // Periodically republish the configuration catalog to Node-RED.
         $pushCatalog(false);
     } catch (\PDOException $e) {
@@ -192,6 +200,7 @@ do {
         $processor = new EventProcessor();
         $nodeRed = new \MultiFlexi\NodeRedBridge();
         $jobWatcher = new \MultiFlexi\JobWatcher($nodeRed);
+        $jobChainProcessor = new \MultiFlexi\JobChainProcessor();
     } catch (\Throwable $e) {
         error_log('Error in event processor: '.$e->getMessage());
         $processor->addStatusMessage('Error: '.$e->getMessage(), 'error');
