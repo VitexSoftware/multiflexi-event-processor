@@ -181,17 +181,38 @@ class JobChainProcessor extends DBEngine
         $targetRuntemplateId = $rule->getRuntemplateId();
         $count = 0;
 
-        if ($fanKey !== null && !empty($fanValues)) {
-            foreach ($fanValues as $value) {
-                $overrides = $baseOverrides;
-                $overrides[$fanKey] = (string) $value;
+        // @file: selectors materialise a temp file whose path lives in
+        // $baseOverrides; scheduleJob() below runs the target job to
+        // completion synchronously (Native executor, exec() blocks), so it's
+        // safe to remove those files once every job scheduled from this rule
+        // has finished reading them.
+        $tmpFiles = [];
 
-                if ($this->scheduleJob($targetRuntemplateId, $overrides, $rule->getMyKey(), $sourceJobId)) {
-                    ++$count;
+        foreach ($rule->getEnvMapping() as $envKey => $selector) {
+            if (str_starts_with((string) $selector, '@file:') && isset($baseOverrides[$envKey])) {
+                $tmpFiles[] = $baseOverrides[$envKey];
+            }
+        }
+
+        try {
+            if ($fanKey !== null && !empty($fanValues)) {
+                foreach ($fanValues as $value) {
+                    $overrides = $baseOverrides;
+                    $overrides[$fanKey] = (string) $value;
+
+                    if ($this->scheduleJob($targetRuntemplateId, $overrides, $rule->getMyKey(), $sourceJobId)) {
+                        ++$count;
+                    }
+                }
+            } elseif ($this->scheduleJob($targetRuntemplateId, $baseOverrides, $rule->getMyKey(), $sourceJobId)) {
+                ++$count;
+            }
+        } finally {
+            foreach ($tmpFiles as $tmpFile) {
+                if (is_string($tmpFile) && is_file($tmpFile)) {
+                    unlink($tmpFile);
                 }
             }
-        } elseif ($this->scheduleJob($targetRuntemplateId, $baseOverrides, $rule->getMyKey(), $sourceJobId)) {
-            ++$count;
         }
 
         return $count;
