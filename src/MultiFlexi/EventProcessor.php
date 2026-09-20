@@ -137,15 +137,7 @@ class EventProcessor extends DBEngine
         $sourceId = (int) $sourceData['id'];
         $rules = $this->eventRuleHelper->getRulesForSource($sourceId);
         $forwardToNodeRed = $this->forwardsChangesToNodeRed();
-
-        if (empty($rules) && !$forwardToNodeRed) {
-            $this->addStatusMessage(
-                sprintf(_('No enabled rules for source "%s", skipping %d change(s)'), $sourceData['name'] ?? $sourceId, \count($changes)),
-                'debug',
-            );
-
-            return 0;
-        }
+        $flowInterpreter = new FlowInterpreter();
 
         $processedCount = 0;
 
@@ -156,8 +148,9 @@ class EventProcessor extends DBEngine
                 }
 
                 $matched = $this->processChange($change, $rules, $source);
+                $flowStarted = $flowInterpreter->startFromChange($change, $sourceData);
 
-                if ($matched) {
+                if ($matched || $flowStarted > 0) {
                     ++$processedCount;
                 }
 

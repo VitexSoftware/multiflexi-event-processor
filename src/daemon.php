@@ -108,6 +108,7 @@ $processor = new EventProcessor();
 $nodeRed = new \MultiFlexi\NodeRedBridge();
 $jobWatcher = new \MultiFlexi\JobWatcher($nodeRed);
 $jobChainProcessor = new \MultiFlexi\JobChainProcessor();
+$flowInterpreter = new \MultiFlexi\FlowInterpreter();
 $processor->logBanner(sprintf(_('MultiFlexi Eventor Daemon %s started'), Shared::appVersion()));
 
 if ($nodeRed->isEnabled()) {
@@ -187,6 +188,13 @@ do {
             $processor->addStatusMessage(sprintf(_('Scheduled %d chained job(s)'), $chainedJobs), 'success');
         }
 
+        // Advance stored flow graphs (Node-RED designs executed server-side)
+        $flowSteps = $flowInterpreter->tick();
+
+        if ($flowSteps > 0) {
+            $processor->addStatusMessage(sprintf(_('Advanced %d flow step(s)'), $flowSteps), 'success');
+        }
+
         // Periodically republish the configuration catalog to Node-RED.
         $pushCatalog(false);
     } catch (\PDOException $e) {
@@ -201,6 +209,7 @@ do {
         $nodeRed = new \MultiFlexi\NodeRedBridge();
         $jobWatcher = new \MultiFlexi\JobWatcher($nodeRed);
         $jobChainProcessor = new \MultiFlexi\JobChainProcessor();
+        $flowInterpreter = new \MultiFlexi\FlowInterpreter();
     } catch (\Throwable $e) {
         error_log('Error in event processor: '.$e->getMessage());
         $processor->addStatusMessage('Error: '.$e->getMessage(), 'error');

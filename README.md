@@ -6,11 +6,17 @@ Event-driven job triggering daemon for the MultiFlexi suite.
 
 ## Overview
 
-Bridges external webhook adapters (e.g. `abraflexi-webhook-acceptor`) with MultiFlexi's job execution engine. Follows a **poll → match rules → schedule job** pattern:
+Bridges external webhook adapters (e.g. `abraflexi-webhook-acceptor`) with MultiFlexi's job execution engine:
 
 1. Reads unprocessed changes from adapter databases (`changes_cache` table)
-2. Matches changes against configured EventRules (evidence + operation patterns)
-3. Schedules MultiFlexi jobs via `multiflexi-cli runtemplate schedule`
+2. Matches changes against configured EventRules **and** stored Node-RED **flows**
+3. Schedules MultiFlexi jobs via `multiflexi-cli` / advances `FlowInterpreter` steps
+
+### Flow interpreter
+
+Graphs designed in Node-RED are stored as `flow` / `flow_version` / `flow_node` /
+`flow_wire` and executed here without Node-RED running (map, switch, delay,
+RunTemplate wait). Legacy pairwise `event_rule` chaining remains available.
 
 ## Installation
 
