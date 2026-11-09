@@ -174,6 +174,13 @@ do {
             $processor->addStatusMessage(sprintf(_('Processed %d event(s)'), $processedCount), 'success');
         }
 
+        // Phase 2 of event dispatch: start a job for every open event Task that is due
+        $dispatchedTasks = $processor->executeDueTasks();
+
+        if ($dispatchedTasks > 0) {
+            $processor->addStatusMessage(sprintf(_('Dispatched %d event task(s)'), $dispatchedTasks), 'success');
+        }
+
         // Forward newly finished jobs to Node-RED (output chaining)
         $forwardedJobs = $jobWatcher->forwardFinishedJobs();
 
