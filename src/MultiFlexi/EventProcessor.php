@@ -154,7 +154,7 @@ class EventProcessor extends DBEngine
                     ++$processedCount;
                 }
 
-                // Always update last_processed_id and wipe the cache record
+                // Tasks exist now: advance the cursor and wipe the cache record
                 $inversion = (int) $change['inversion'];
                 $source->wipeCacheRecord($inversion);
                 $source->updateLastProcessed($inversion);
@@ -163,6 +163,9 @@ class EventProcessor extends DBEngine
                     sprintf(_('Error processing change %d: %s'), $change['inversion'] ?? 0, $e->getMessage()),
                     'error',
                 );
+
+                // Keep order and do not skip the failed change: retry on the next poll
+                break;
             }
         }
 
@@ -188,7 +191,7 @@ class EventProcessor extends DBEngine
             $rule->setMyKey($ruleData['id']);
 
             if ($rule->matches($change)) {
-                $this->scheduleJob($rule, $change);
+                $this->expandToTasks($rule, $change);
                 $matched = true;
 
                 $this->addStatusMessage(
@@ -209,17 +212,79 @@ class EventProcessor extends DBEngine
     }
 
     /**
+     * Turn one matched change into Tasks (idempotent).
+     *
+     * @param array<string, mixed> $change
+     *
+     * @return int Number of Tasks the change maps to
+     */
+    public function expandToTasks(EventRule $rule, array $change): int
+    {
+        $rt = new RunTemplate($rule->getRuntemplateId());
+        $count = 0;
+
+        if ($rule->isItemFanout()) {
+            foreach ($rule->matchingItems($change) as $item) {
+                $env = $rule->buildItemEnvOverrides($change, $item);
+                Task::forEvent($rt, $env['EVENT_IDEMPOTENCY_KEY'], $env);
+                ++$count;
+            }
+
+            return $count;
+        }
+
+        $env = $rule->buildEnvOverrides($change);
+        $key = EventRule::idempotencyKey($change, (int) $rule->getMyKey());
+        $env['EVENT_IDEMPOTENCY_KEY'] = $key;
+        Task::forEvent($rt, $key, $env);
+
+        return 1;
+    }
+
+    /**
+     * Phase 2 (execute): start a job for every open event Task that is due.
+     * The job is linked to the Task; Job::updateTaskState() fulfils it or
+     * schedules the retry, and a Task that runs out of attempts becomes dead.
+     *
+     * @return int Number of jobs scheduled
+     */
+    public function executeDueTasks(): int
+    {
+        $started = 0;
+
+        foreach (Task::dueEventTasks() as $row) {
+            $task = new Task();
+            $task->takeData($row);
+            $task->setMyKey((int) $row['id']);
+
+            $ok = $this->scheduleJob(
+                $task->getContext(),
+                (int) $row['runtemplate_id'],
+                (int) $row['id'],
+            );
+
+            if ($ok) {
+                $task->markDispatched();
+                ++$started;
+            } else {
+                $task->recordAttemptFailure(_('Scheduling the job failed'));
+            }
+        }
+
+        return $started;
+    }
+
+    /**
      * Schedule a MultiFlexi job via multiflexi-cli for a matched rule.
      *
-     * @param EventRule            $rule   The matched event rule
-     * @param array<string, mixed> $change The change record data
+     * @param array<string, string> $envOverrides env overrides of the event
+     * @param int                   $runtemplateId RunTemplate to run
+     * @param int                   $taskId        Task the job belongs to (0 = none)
      *
      * @return bool True if scheduling succeeded
      */
-    public function scheduleJob(EventRule $rule, array $change): bool
+    public function scheduleJob(array $envOverrides, int $runtemplateId, int $taskId = 0): bool
     {
-        $runtemplateId = $rule->getRuntemplateId();
-        $envOverrides = $rule->buildEnvOverrides($change);
 
         $configArgs = [];
 
@@ -232,10 +297,11 @@ class EventProcessor extends DBEngine
         // schedule time itself; it has no --schedule_type option. SCHEDULE_TYPE
         // is retained for event metadata forwarded to Node-RED.
         $command = sprintf(
-            '%s run-template:schedule --id %d %s --schedule_time now --executor Native -f json',
+            '%s run-template:schedule --id %d %s%s --schedule_time now --executor Native -f json',
             escapeshellcmd($this->cliPath),
             $runtemplateId,
             implode(' ', $configArgs),
+            $taskId > 0 ? ' --task_id '.$taskId : '',
         );
 
         $output = [];
