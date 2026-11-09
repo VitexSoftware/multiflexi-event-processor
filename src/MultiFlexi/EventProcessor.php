@@ -156,7 +156,7 @@ class EventProcessor extends DBEngine
 
                 // Tasks exist now: advance the cursor and wipe the cache record
                 $inversion = (int) $change['inversion'];
-                $source->wipeCacheRecord($inversion);
+                $source->wipeCacheRecord($inversion, isset($change['id']) ? (int) $change['id'] : null);
                 $source->updateLastProcessed($inversion);
             } catch (\Throwable $e) {
                 $this->addStatusMessage(

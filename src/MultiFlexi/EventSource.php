@@ -130,12 +130,24 @@ class EventSource extends DBEngine
     /**
      * Remove a processed change record from the adapter's cache table.
      *
-     * @param int $inversion The change inversion (primary key in changes_cache)
+     * The cache is shared by every tenant of the acceptor and the inversion is the
+     * change version of ONE AbraFlexi company, so two tenants regularly hold the
+     * same inversion. A record is therefore removed by its own row id; deleting by
+     * inversion alone would also destroy another tenant's unprocessed change.
+     *
+     * @param int      $inversion The change inversion (only used when the row id is unknown)
+     * @param null|int $rowId     Primary key (changes_cache.id) of the processed record
      */
-    public function wipeCacheRecord(int $inversion): void
+    public function wipeCacheRecord(int $inversion, ?int $rowId = null): void
     {
-        $statement = $this->externalConnection()->prepare(sprintf('DELETE FROM %s WHERE inversion = :inversion', self::CACHE_TABLE));
-        $statement->bindValue(':inversion', $inversion, \PDO::PARAM_INT);
+        if (null !== $rowId) {
+            $statement = $this->externalConnection()->prepare(sprintf('DELETE FROM %s WHERE id = :id', self::CACHE_TABLE));
+            $statement->bindValue(':id', $rowId, \PDO::PARAM_INT);
+        } else {
+            $statement = $this->externalConnection()->prepare(sprintf('DELETE FROM %s WHERE inversion = :inversion', self::CACHE_TABLE));
+            $statement->bindValue(':inversion', $inversion, \PDO::PARAM_INT);
+        }
+
         $statement->execute();
     }
 
