@@ -99,14 +99,27 @@ class EventSource extends DBEngine
         $lastProcessed = (int) ($this->getDataValue('last_processed_id') ?? 0);
         $limit = (int) \Ease\Shared::cfg('MULTIFLEXI_EVENT_BATCH', self::DEFAULT_BATCH_LIMIT);
 
+        $serverUrl = trim((string) ($this->getDataValue('server_url') ?? ''));
+
+        // Tenant scope: changes_cache.source is changesapi.id (one row per server/c/company)
+        $tenantFilter = $serverUrl !== ''
+            ? ' AND source IN (SELECT id FROM changesapi WHERE serverurl = :serverurl)'
+            : '';
+
         $sql = sprintf(
-            'SELECT * FROM %s WHERE inversion > :last ORDER BY inversion ASC LIMIT %d',
+            'SELECT * FROM %s WHERE inversion > :last%s ORDER BY inversion ASC LIMIT %d',
             self::CACHE_TABLE,
+            $tenantFilter,
             $limit,
         );
 
         $statement = $this->externalConnection()->prepare($sql);
         $statement->bindValue(':last', $lastProcessed, \PDO::PARAM_INT);
+
+        if ($serverUrl !== '') {
+            $statement->bindValue(':serverurl', rtrim($serverUrl, '/'));
+        }
+
         $statement->execute();
 
         $changes = $statement->fetchAll(\PDO::FETCH_ASSOC);
