@@ -29,7 +29,7 @@ spl_autoload_register(function ($class) {
     if (file_exists($file)) {
         require_once $file;
     }
-}, true, true); // prepend: EventSource is also shipped by multiflexi-core (older copy without tenant scope), the eventor's one must win
+});
 
 require_once '/usr/share/php/Composer/InstalledVersions.php';
 
